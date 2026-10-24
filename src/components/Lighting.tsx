@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import * as THREE from 'three';
 import { threeColors } from '../config/colors';
 
@@ -6,8 +7,17 @@ import { threeColors } from '../config/colors';
  * Dramatic but soft — inspired by museum/gallery lighting.
  */
 export function Lighting() {
+  const roseTargetRef = useRef<THREE.Object3D>(new THREE.Object3D());
+  const letterTargetRef = useRef<THREE.Object3D>(new THREE.Object3D());
+  const finaleTargetRef = useRef<THREE.Object3D>(new THREE.Object3D());
+
   return (
     <>
+      {/* Light targets */}
+      <primitive object={roseTargetRef.current} position={[0, 1.2, 0]} />
+      <primitive object={letterTargetRef.current} position={[0, 1.1, -35]} />
+      <primitive object={finaleTargetRef.current} position={[0, 1.2, -55]} />
+
       {/* Main directional light — warm ivory, dramatic angle */}
       <directionalLight
         color={threeColors.ivory}
@@ -26,46 +36,61 @@ export function Lighting() {
       />
 
       {/* Ambient fill — very dim burgundy, keeps shadows from going pure black */}
-      <ambientLight color={threeColors.burgundy} intensity={0.12} />
+      <ambientLight color={threeColors.burgundy} intensity={0.14} />
 
-      {/* Scene-specific spot lights for focal points */}
-      {/* Scene 1: Narrow spot on rose position */}
+      {/* Scene 1: Narrow warm ivory spot on the sculptural rose */}
       <spotLight
         color={threeColors.ivory}
-        intensity={2.0}
-        position={[1, 8, 0]}
-        angle={0.25}
-        penumbra={0.8}
-        distance={20}
+        intensity={2.8}
+        position={[1, 7.5, 3]}
+        angle={0.28}
+        penumbra={0.75}
+        distance={22}
         castShadow
-        target-position={[0, 0, 0]}
+        target={roseTargetRef.current}
       />
 
-      {/* Scene 2: Gallery illumination */}
+      {/* Scene 2: Gallery soft architectural illumination */}
       <pointLight
         color={threeColors.porcelain}
-        intensity={0.6}
-        position={[0, 5, -15]}
-        distance={25}
+        intensity={0.7}
+        position={[0, 4.8, -16]}
+        distance={24}
+      />
+      <pointLight
+        color={threeColors.ivory}
+        intensity={0.5}
+        position={[0, 4.8, -22]}
+        distance={24}
       />
 
       {/* Scene 3: Letter pedestal spot */}
       <spotLight
         color={threeColors.ivory}
-        intensity={1.5}
-        position={[0, 7, -35]}
-        angle={0.3}
+        intensity={2.0}
+        position={[0, 7, -33]}
+        angle={0.32}
         penumbra={0.7}
         distance={18}
         castShadow
+        target={letterTargetRef.current}
       />
 
-      {/* Scene 4: Finale — soft wide light */}
+      {/* Scene 4: Finale — soft luminous light through glass vessel */}
       <pointLight
         color={threeColors.porcelain}
-        intensity={0.8}
-        position={[0, 6, -55]}
-        distance={30}
+        intensity={0.9}
+        position={[0, 5, -53]}
+        distance={28}
+      />
+      <spotLight
+        color={threeColors.ivory}
+        intensity={2.2}
+        position={[-2, 6, -52]}
+        angle={0.35}
+        penumbra={0.8}
+        distance={20}
+        target={finaleTargetRef.current}
       />
     </>
   );

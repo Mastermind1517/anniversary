@@ -1,6 +1,10 @@
-import { useRef } from 'react';
+import React from 'react';
 import * as THREE from 'three';
-import { threeColors, colors } from '../config/colors';
+import { colors } from '../config/colors';
+import { SculpturalRose } from './scenes/OpeningRose';
+import { MemoryGallery } from './scenes/MemoryGallery';
+import { LoveLetterScene } from './scenes/LoveLetter';
+import { FinaleScene } from './scenes/FinaleScene';
 
 /**
  * Architectural gallery environment — ivory walls, burgundy alcoves,
@@ -57,73 +61,22 @@ export function ArchitecturalEnvironment() {
       <Alcove position={[-7.8, 2, -55]} label="Scene 4" />
       <Alcove position={[7.8, 2, -55]} label="Scene 4" mirror />
 
-      {/* Scene 1 placeholder: red sphere (will become rose) */}
-      <mesh position={[0, 1.2, 0]} castShadow>
-        <sphereGeometry args={[0.6, 32, 32]} />
-        <meshStandardMaterial
-          color={colors.crimson}
-          roughness={0.4}
-          metalness={0.1}
-        />
-      </mesh>
+      {/* Scene 1: Sculptural Rose */}
+      <SculpturalRose position={[0, 1.2, 0]} scale={1.8} />
 
-      {/* Scene 2 placeholders: gallery frames on walls */}
-      <GalleryFramePlaceholder position={[-6.5, 2.5, -13]} />
-      <GalleryFramePlaceholder position={[-6.5, 2.5, -17]} />
-      <GalleryFramePlaceholder position={[-6.5, 2.5, -21]} />
-      <GalleryFramePlaceholder position={[6.5, 2.5, -14]} rotation={[0, Math.PI, 0]} />
-      <GalleryFramePlaceholder position={[6.5, 2.5, -18]} rotation={[0, Math.PI, 0]} />
-      <GalleryFramePlaceholder position={[6.5, 2.5, -22]} rotation={[0, Math.PI, 0]} />
+      {/* Scene 2: Architectural Memory Gallery */}
+      <MemoryGallery />
 
-      {/* Scene 3 placeholder: box on pedestal (will become letter/keepsake) */}
-      <group position={[0, 0, -35]}>
-        {/* Pedestal */}
-        <mesh position={[0, 0.5, 0]} castShadow>
-          <boxGeometry args={[0.8, 1, 0.6]} />
-          <meshStandardMaterial
-            color={colors.oxblood}
-            roughness={0.7}
-            metalness={0.05}
-          />
-        </mesh>
-        {/* Box on pedestal */}
-        <mesh position={[0, 1.15, 0]} castShadow>
-          <boxGeometry args={[0.5, 0.15, 0.35]} />
-          <meshStandardMaterial
-            color={colors.ivory}
-            roughness={0.6}
-            metalness={0.02}
-          />
-        </mesh>
-      </group>
+      {/* Scene 3: Keepsake Box & Love Letter */}
+      <LoveLetterScene />
 
-      {/* Scene 4 placeholder: glass sphere (will become glass vessel + rose) */}
-      <group position={[0, 0, -55]}>
-        <mesh position={[0, 1.2, 0]} castShadow>
-          <sphereGeometry args={[0.4, 32, 32]} />
-          <meshPhysicalMaterial
-            color={colors.porcelain}
-            roughness={0.05}
-            metalness={0.0}
-            transmission={0.9}
-            thickness={0.5}
-            ior={1.5}
-          />
-        </mesh>
-        {/* Small crimson sphere inside (rose placeholder) */}
-        <mesh position={[0, 1.1, 0]}>
-          <sphereGeometry args={[0.15, 16, 16]} />
-          <meshStandardMaterial
-            color={colors.crimson}
-            roughness={0.5}
-          />
-        </mesh>
-      </group>
+      {/* Scene 4: The Finale — Minimal Glass Vessel & Opening Horizon */}
+      <FinaleScene />
 
-      {/* Translucent divider panels between scenes */}
+      {/* Translucent divider panels between scenes for architectural atmosphere */}
       <TranslucentPanel position={[0, 3, -7]} />
       <TranslucentPanel position={[0, 3, -27]} />
-      <TranslucentPanel position={[0, 3, -45]} />
+      <TranslucentPanel position={[0, 3, -47]} />
     </group>
   );
 }
@@ -173,37 +126,6 @@ function Alcove({
           roughness={0.92}
           metalness={0}
           side={THREE.BackSide}
-        />
-      </mesh>
-    </group>
-  );
-}
-
-/** Gallery frame placeholder — ivory border with dark interior */
-function GalleryFramePlaceholder({
-  position,
-  rotation,
-}: {
-  position: [number, number, number];
-  rotation?: [number, number, number];
-}) {
-  return (
-    <group position={position} rotation={rotation}>
-      {/* Frame border */}
-      <mesh castShadow>
-        <boxGeometry args={[2.2, 1.6, 0.08]} />
-        <meshStandardMaterial
-          color={colors.ivory}
-          roughness={0.7}
-          metalness={0.05}
-        />
-      </mesh>
-      {/* Photo area (dark) */}
-      <mesh position={[0, 0, 0.045]}>
-        <planeGeometry args={[1.9, 1.3]} />
-        <meshStandardMaterial
-          color={colors.charcoal}
-          roughness={0.9}
         />
       </mesh>
     </group>
