@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAppState } from '../AppState';
 import { siteConfig } from '../../config/content';
 
@@ -8,6 +8,16 @@ import { siteConfig } from '../../config/content';
  */
 export function LoveLetterModal() {
   const { isLetterOpen, setIsLetterOpen } = useAppState();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isLetterOpen) {
+        setIsLetterOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLetterOpen, setIsLetterOpen]);
 
   if (!isLetterOpen) return null;
 
@@ -26,7 +36,7 @@ export function LoveLetterModal() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: 'clamp(1rem, 4vw, 3rem)',
-        animation: 'fadeIn 0.8s ease-out forwards',
+        animation: 'fadeIn 0.6s ease-out forwards',
         pointerEvents: 'auto',
         overflowY: 'auto',
       }}
@@ -69,7 +79,7 @@ export function LoveLetterModal() {
           onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
         >
-          Fold Letter
+          Fold Letter [Esc]
         </button>
 
         {/* Archival Header date/location mark */}
@@ -84,7 +94,7 @@ export function LoveLetterModal() {
               margin: 0,
             }}
           >
-            One Year — For Krishangi
+            One Year — For {siteConfig.partner.name}
           </p>
         </div>
 

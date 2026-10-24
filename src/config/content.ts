@@ -1,6 +1,7 @@
 export interface Memory {
   id: number;
   photo: string;
+  hasRealPhoto?: boolean;
   date: string;
   title: string;
   caption: string;
@@ -36,6 +37,7 @@ export const siteConfig: SiteConfig = {
     {
       id: 1,
       photo: '/photos/memory-01.jpg',
+      hasRealPhoto: false, // Set to true when photo is added to public/photos/
       date: '2025-10-24',
       title: 'The Beginning',
       caption: 'Where it all started.',
@@ -43,6 +45,7 @@ export const siteConfig: SiteConfig = {
     {
       id: 2,
       photo: '/photos/memory-02.jpg',
+      hasRealPhoto: false,
       date: '2025-12-25',
       title: 'First Winter',
       caption: 'Our first winter together.',
@@ -50,6 +53,7 @@ export const siteConfig: SiteConfig = {
     {
       id: 3,
       photo: '/photos/memory-03.jpg',
+      hasRealPhoto: false,
       date: '2026-02-14',
       title: 'Valentine\'s Day',
       caption: 'A day that felt like a lifetime.',
@@ -57,6 +61,7 @@ export const siteConfig: SiteConfig = {
     {
       id: 4,
       photo: '/photos/memory-04.jpg',
+      hasRealPhoto: false,
       date: '2026-04-15',
       title: 'Spring',
       caption: 'Everything in bloom.',
@@ -64,6 +69,7 @@ export const siteConfig: SiteConfig = {
     {
       id: 5,
       photo: '/photos/memory-05.jpg',
+      hasRealPhoto: false,
       date: '2026-07-20',
       title: 'Summer Days',
       caption: 'Long days, warm nights.',
@@ -71,6 +77,7 @@ export const siteConfig: SiteConfig = {
     {
       id: 6,
       photo: '/photos/memory-06.jpg',
+      hasRealPhoto: false,
       date: '2026-09-10',
       title: 'Almost There',
       caption: 'Counting down to us.',

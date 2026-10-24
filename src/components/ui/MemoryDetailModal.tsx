@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAppState } from '../AppState';
 import { siteConfig } from '../../config/content';
 
 /**
  * Intimate editorial modal displayed when a gallery photograph is clicked.
- * Clean, restrained, fine-art exhibition layout featuring the photograph,
+ * Clean, restrained, fine-art exhibition layout featuring the photograph or archival plaque,
  * date, title, and personal caption.
  */
 export function MemoryDetailModal() {
   const { activePhotoId, setActivePhotoId } = useAppState();
-  const [imgError, setImgError] = useState(false);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && activePhotoId !== null) {
+        setActivePhotoId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activePhotoId, setActivePhotoId]);
 
   if (activePhotoId === null) return null;
 
@@ -24,14 +33,14 @@ export function MemoryDetailModal() {
         position: 'fixed',
         inset: 0,
         zIndex: 50,
-        backgroundColor: 'rgba(33, 13, 17, 0.88)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        backgroundColor: 'rgba(26, 8, 12, 0.88)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 'clamp(1rem, 3vw, 2.5rem)',
-        animation: 'fadeIn 0.6s ease-out forwards',
+        padding: 'clamp(1rem, 3.5vw, 2.5rem)',
+        animation: 'fadeIn 0.5s ease-out forwards',
         pointerEvents: 'auto',
         overflowY: 'auto',
       }}
@@ -39,14 +48,15 @@ export function MemoryDetailModal() {
     >
       <div
         style={{
-          maxWidth: '680px',
+          maxWidth: '640px',
           width: '100%',
           backgroundColor: '#FFFCF8',
           color: '#211D1D',
           padding: 'clamp(2rem, 5vw, 3.5rem)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.65)',
           position: 'relative',
           margin: 'auto',
+          border: '1px solid rgba(245, 240, 231, 0.7)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -62,18 +72,18 @@ export function MemoryDetailModal() {
             border: 'none',
             color: '#651E2B',
             fontFamily: '"Inter", sans-serif',
-            fontSize: '0.8rem',
-            letterSpacing: '0.15em',
+            fontSize: '0.75rem',
+            letterSpacing: '0.18em',
             textTransform: 'uppercase',
             cursor: 'pointer',
-            padding: '0.5rem',
+            padding: '0.4rem',
             opacity: 0.7,
             transition: 'opacity 0.3s ease',
           }}
           onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
         >
-          Close
+          Close [Esc]
         </button>
 
         {/* Date header */}
@@ -81,10 +91,10 @@ export function MemoryDetailModal() {
           style={{
             fontFamily: '"Inter", sans-serif',
             fontSize: '0.75rem',
-            letterSpacing: '0.2em',
+            letterSpacing: '0.22em',
             textTransform: 'uppercase',
             color: '#8F2635',
-            margin: '0 0 1rem 0',
+            margin: '0 0 0.8rem 0',
           }}
         >
           {memory.date}
@@ -95,7 +105,7 @@ export function MemoryDetailModal() {
           style={{
             fontFamily: '"Cormorant Garamond", serif',
             fontWeight: 400,
-            fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)',
+            fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)',
             letterSpacing: '0.04em',
             color: '#42151D',
             margin: '0 0 1.5rem 0',
@@ -105,29 +115,28 @@ export function MemoryDetailModal() {
           {memory.title}
         </h2>
 
-        {/* Photograph Display with ivory passe-partout */}
+        {/* Photograph or Curated Archival Matte Display */}
         <div
           style={{
             width: '100%',
-            maxHeight: '360px',
+            aspectRatio: '1.48 / 1',
             backgroundColor: '#F5F0E7',
             marginBottom: '1.8rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
-            border: '1px solid rgba(101, 30, 43, 0.1)',
+            border: '1px solid rgba(101, 30, 43, 0.12)',
+            boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.06)',
           }}
         >
-          {!imgError ? (
+          {memory.hasRealPhoto && memory.photo ? (
             <img
               src={memory.photo}
               alt={memory.title}
-              onError={() => setImgError(true)}
               style={{
                 width: '100%',
                 height: '100%',
-                maxHeight: '360px',
                 objectFit: 'cover',
                 display: 'block',
               }}
@@ -135,17 +144,31 @@ export function MemoryDetailModal() {
           ) : (
             <div
               style={{
-                padding: '3rem 2rem',
+                padding: '2rem',
                 textAlign: 'center',
                 color: '#651E2B',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.5rem',
               }}
             >
+              <div
+                style={{
+                  width: '36px',
+                  height: '1px',
+                  backgroundColor: '#8F2635',
+                  opacity: 0.4,
+                  marginBottom: '0.5rem',
+                }}
+              />
               <p
                 style={{
                   fontFamily: '"Cormorant Garamond", serif',
-                  fontSize: '1.3rem',
+                  fontSize: '1.4rem',
                   fontStyle: 'italic',
-                  margin: '0 0 0.5rem 0',
+                  margin: 0,
+                  color: '#42151D',
                 }}
               >
                 {memory.title}
@@ -153,14 +176,14 @@ export function MemoryDetailModal() {
               <p
                 style={{
                   fontFamily: '"Inter", sans-serif',
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.15em',
+                  fontSize: '0.68rem',
+                  letterSpacing: '0.2em',
                   color: '#B8B0A8',
                   textTransform: 'uppercase',
                   margin: 0,
                 }}
               >
-                Place photo in {memory.photo}
+                Memory Archive · {memory.date}
               </p>
             </div>
           )}
@@ -169,11 +192,11 @@ export function MemoryDetailModal() {
         {/* Thin divider rule */}
         <div
           style={{
-            width: '40px',
+            width: '36px',
             height: '1px',
             backgroundColor: '#8F2635',
-            opacity: 0.3,
-            marginBottom: '1.5rem',
+            opacity: 0.35,
+            marginBottom: '1.4rem',
           }}
         />
 
@@ -185,7 +208,7 @@ export function MemoryDetailModal() {
             fontSize: 'clamp(1.1rem, 2vw, 1.35rem)',
             lineHeight: 1.7,
             color: '#211D1D',
-            margin: '0 0 2rem 0',
+            margin: '0 0 1.8rem 0',
           }}
         >
           "{memory.caption}"
@@ -195,14 +218,14 @@ export function MemoryDetailModal() {
         <p
           style={{
             fontFamily: '"Inter", sans-serif',
-            fontSize: '0.7rem',
-            letterSpacing: '0.12em',
+            fontSize: '0.68rem',
+            letterSpacing: '0.15em',
             color: '#B8B0A8',
             margin: 0,
             textTransform: 'uppercase',
           }}
         >
-          Moment {String(memory.id).padStart(2, '0')} of 06
+          Moment {String(memory.id).padStart(2, '0')} of 06 · One Year
         </p>
       </div>
     </div>

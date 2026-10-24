@@ -13,57 +13,61 @@ interface PhotoFrameProps {
 }
 
 /**
- * Creates an elegant editorial photo canvas texture as a high-art placeholder
- * until the user drops real personal photos.
+ * Creates an elegant editorial photo canvas texture.
+ * Canvas resolution 1184x800 matches the 1.85:1.25 (1.48:1) artwork plane exactly.
  */
-function createPlaceholderTexture(title: string, date: string, id: number): THREE.CanvasTexture {
+function createArchivalPlaceholderTexture(title: string, date: string, id: number): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 768;
+  canvas.width = 1184;
+  canvas.height = 800;
   const ctx = canvas.getContext('2d');
   if (ctx) {
-    const grad = ctx.createLinearGradient(0, 0, 1024, 768);
-    const hues = ['#301217', '#250E12', '#3D151D', '#1F0B0E', '#2B1015', '#38161E'];
+    // Rich archival tonal background
+    const hues = ['#2B0E14', '#200A0E', '#341219', '#1C080B', '#270D13', '#301016'];
     const baseHue = hues[(id - 1) % hues.length];
+    const grad = ctx.createLinearGradient(0, 0, 1184, 800);
     grad.addColorStop(0, baseHue);
-    grad.addColorStop(1, '#1A080B');
+    grad.addColorStop(1, '#150608');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 1024, 768);
+    ctx.fillRect(0, 0, 1184, 800);
 
-    // Subtle fine-art border inside image
-    ctx.strokeStyle = 'rgba(245, 240, 231, 0.15)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(40, 40, 944, 688);
+    // Fine archival border inlay
+    ctx.strokeStyle = 'rgba(245, 240, 231, 0.18)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(48, 48, 1088, 704);
 
-    // Subtle artistic vignette / texture lines
-    ctx.strokeStyle = 'rgba(245, 240, 231, 0.05)';
-    for (let i = 0; i < 5; i++) {
+    // Subtle fine concentric guide lines
+    ctx.strokeStyle = 'rgba(245, 240, 231, 0.04)';
+    for (let i = 0; i < 4; i++) {
       ctx.beginPath();
-      ctx.arc(512, 384, 120 + i * 40, 0, Math.PI * 2);
+      ctx.arc(592, 400, 140 + i * 50, 0, Math.PI * 2);
       ctx.stroke();
     }
 
-    // Editorial date & title centered
+    // Archival date header
     ctx.fillStyle = '#F5F0E7';
-    ctx.font = '300 24px "Inter", sans-serif';
+    ctx.font = '300 22px "Inter", sans-serif';
     ctx.textAlign = 'center';
-    ctx.letterSpacing = '4px';
-    ctx.fillText(date.toUpperCase(), 512, 350);
+    ctx.letterSpacing = '5px';
+    ctx.fillText(date.toUpperCase(), 592, 350);
 
+    // Title in elegant Cormorant Garamond
     ctx.fillStyle = '#FFFCF8';
     ctx.font = '300 48px "Cormorant Garamond", serif';
     ctx.letterSpacing = '2px';
-    ctx.fillText(title, 512, 420);
+    ctx.fillText(title, 592, 430);
 
-    // Monogram / archival stamp
-    ctx.fillStyle = 'rgba(184, 176, 168, 0.4)';
-    ctx.font = '300 16px "Inter", sans-serif';
-    ctx.letterSpacing = '3px';
-    ctx.fillText('MOMENT ' + String(id).padStart(2, '0'), 512, 650);
+    // Monogram badge
+    ctx.fillStyle = 'rgba(184, 176, 168, 0.5)';
+    ctx.font = '300 15px "Inter", sans-serif';
+    ctx.letterSpacing = '4px';
+    ctx.fillText(`MOMENT ${String(id).padStart(2, '0')} · EXHIBIT`, 592, 680);
   }
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
   return texture;
 }
 
@@ -71,32 +75,45 @@ export function PhotoFrame({ memory, position, rotation = [0, 0, 0], onSelect }:
   const meshRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
   const [activeTexture, setActiveTexture] = useState<THREE.Texture | null>(null);
+  const loadedTextureRef = useRef<THREE.Texture | null>(null);
 
-  // Generate artistic placeholder texture as default
+  // 1. Create matching 1.48 aspect-ratio placeholder
   const placeholderTexture = useMemo(() => {
-    return createPlaceholderTexture(memory.title, memory.date, memory.id);
-  }, [memory]);
+    return createArchivalPlaceholderTexture(memory.title, memory.date, memory.id);
+  }, [memory.title, memory.date, memory.id]);
 
-  // Attempt to load the real photograph from memory.photo if available
+  // Clean up textures on unmount
   useEffect(() => {
-    if (memory.photo) {
+    return () => {
+      if (placeholderTexture) {
+        placeholderTexture.dispose();
+      }
+      if (loadedTextureRef.current) {
+        loadedTextureRef.current.dispose();
+      }
+    };
+  }, [placeholderTexture]);
+
+  // 2. Load real photo only if explicitly marked as available
+  useEffect(() => {
+    if (memory.hasRealPhoto && memory.photo) {
       const loader = new THREE.TextureLoader();
       loader.load(
         memory.photo,
         (loadedTex) => {
           loadedTex.colorSpace = THREE.SRGBColorSpace;
+          loadedTextureRef.current = loadedTex;
           setActiveTexture(loadedTex);
         },
         undefined,
         () => {
-          // Fall back gracefully to archival placeholder
           setActiveTexture(placeholderTexture);
         }
       );
     } else {
       setActiveTexture(placeholderTexture);
     }
-  }, [memory.photo, placeholderTexture]);
+  }, [memory.hasRealPhoto, memory.photo, placeholderTexture]);
 
   useFrame((_, delta) => {
     if (meshRef.current) {
@@ -124,55 +141,57 @@ export function PhotoFrame({ memory, position, rotation = [0, 0, 0], onSelect }:
         document.body.style.cursor = 'auto';
       }}
     >
-      {/* Outer Ivory Gallery Frame */}
+      {/* Outer Ivory Gallery Frame with subtle bevel */}
       <mesh castShadow receiveShadow>
-        <boxGeometry args={[2.3, 1.7, 0.08]} />
+        <boxGeometry args={[2.28, 1.68, 0.08]} />
         <meshStandardMaterial
           color={colors.ivory}
-          roughness={0.7}
-          metalness={0.05}
+          roughness={0.68}
+          metalness={0.04}
         />
       </mesh>
 
-      {/* Frame Passe-partout (matting mount) */}
-      <mesh position={[0, 0, 0.042]}>
+      {/* Frame Passe-partout (matting mount recessed inside frame) */}
+      <mesh position={[0, 0, 0.035]}>
         <planeGeometry args={[2.14, 1.54]} />
         <meshStandardMaterial
           color="#ECE6DC"
-          roughness={0.92}
+          roughness={0.94}
         />
       </mesh>
 
-      {/* Photograph artwork — real texture or high-art placeholder */}
-      <mesh position={[0, 0, 0.045]}>
+      {/* Photograph artwork — 1.85 : 1.25 matching texture aspect ratio 1.48 */}
+      <mesh position={[0, 0, 0.038]}>
         <planeGeometry args={[1.85, 1.25]} />
         <meshStandardMaterial
           map={activeTexture || placeholderTexture}
           roughness={0.45}
-          metalness={0.02}
+          metalness={0.01}
         />
       </mesh>
 
-      {/* Thin protective glass overlay with subtle specular sheen */}
-      <mesh position={[0, 0, 0.048]}>
+      {/* High-clarity protective glass with subtle non-milky specular reflection */}
+      <mesh position={[0, 0, 0.045]}>
         <planeGeometry args={[1.85, 1.25]} />
         <meshPhysicalMaterial
           color="#FFFFFF"
-          roughness={0.08}
-          metalness={0.1}
-          transmission={0.92}
-          thickness={0.05}
+          roughness={0.04}
+          metalness={0.0}
+          transmission={0.96}
+          thickness={0.04}
+          ior={1.48}
           transparent
-          opacity={0.3}
+          opacity={0.35}
         />
       </mesh>
 
-      {/* Subtle label plaque below frame */}
-      <mesh position={[0, -0.98, 0.01]}>
-        <planeGeometry args={[0.8, 0.12]} />
+      {/* Minimal brass plaque below the frame */}
+      <mesh position={[0, -0.96, 0.01]}>
+        <boxGeometry args={[0.7, 0.1, 0.01]} />
         <meshStandardMaterial
           color={colors.oxblood}
-          roughness={0.8}
+          roughness={0.75}
+          metalness={0.1}
         />
       </mesh>
     </group>

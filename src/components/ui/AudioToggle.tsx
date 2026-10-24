@@ -14,7 +14,7 @@ export function AudioToggle({ src = '/audio/ambient.mp3' }: { src?: string }) {
     const audio = new Audio(src);
     audio.loop = true;
     audio.volume = 0.3;
-    audio.preload = 'auto';
+    audio.preload = 'none';
 
     audio.addEventListener('error', () => {
       setIsAvailable(false);

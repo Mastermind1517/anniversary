@@ -3,129 +3,115 @@ import { useFrame } from '@react-three/fiber';
 import { useScroll } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAppState } from './AppState';
+import { evaluateCameraPath } from '../config/scenes';
 
 /**
- * Camera waypoints for the 4 scenes.
- * The camera interpolates smoothly between them based on scroll position.
+ * Focus coordinates when a memory frame is selected.
+ * Places camera directly in front of the artwork at eye-level.
  */
-const waypoints = [
-  {
-    // Scene 1: Opening — sculptural rose
-    position: new THREE.Vector3(0, 2, 8),
-    target: new THREE.Vector3(0, 1.5, 0),
-    range: [0, 0.18] as [number, number],
-  },
-  {
-    // Scene 2: Memory Gallery — moving through gallery corridor
-    position: new THREE.Vector3(0, 2.2, -12),
-    target: new THREE.Vector3(0, 2, -18),
-    range: [0.22, 0.45] as [number, number],
-  },
-  {
-    // Scene 3: Love Letter — approaching pedestal / keepsake box
-    position: new THREE.Vector3(0, 2, -32),
-    target: new THREE.Vector3(0, 1.5, -38),
-    range: [0.50, 0.68] as [number, number],
-  },
-  {
-    // Scene 4: Finale — slow pull-back revealing vessel + horizon
-    position: new THREE.Vector3(0, 2.5, -52),
-    target: new THREE.Vector3(0, 2, -58),
-    range: [0.75, 1.0] as [number, number],
-  },
-];
-
-/** Focus coordinates when a memory frame is selected */
 const photoFocusTargets: Record<number, { pos: THREE.Vector3; target: THREE.Vector3 }> = {
-  1: { pos: new THREE.Vector3(-3.8, 2.4, -13.5), target: new THREE.Vector3(-6.8, 2.4, -13.5) },
-  2: { pos: new THREE.Vector3(3.8, 2.4, -15.5), target: new THREE.Vector3(6.8, 2.4, -15.5) },
-  3: { pos: new THREE.Vector3(-3.8, 2.4, -18.0), target: new THREE.Vector3(-6.8, 2.4, -18.0) },
-  4: { pos: new THREE.Vector3(3.8, 2.4, -20.0), target: new THREE.Vector3(6.8, 2.4, -20.0) },
-  5: { pos: new THREE.Vector3(-3.8, 2.4, -22.5), target: new THREE.Vector3(-6.8, 2.4, -22.5) },
-  6: { pos: new THREE.Vector3(3.8, 2.4, -24.5), target: new THREE.Vector3(6.8, 2.4, -24.5) },
+  1: { pos: new THREE.Vector3(-4.0, 2.4, -13.5), target: new THREE.Vector3(-6.8, 2.4, -13.5) },
+  2: { pos: new THREE.Vector3(4.0, 2.4, -15.5), target: new THREE.Vector3(6.8, 2.4, -15.5) },
+  3: { pos: new THREE.Vector3(-4.0, 2.4, -18.0), target: new THREE.Vector3(-6.8, 2.4, -18.0) },
+  4: { pos: new THREE.Vector3(4.0, 2.4, -20.0), target: new THREE.Vector3(6.8, 2.4, -20.0) },
+  5: { pos: new THREE.Vector3(-4.0, 2.4, -22.5), target: new THREE.Vector3(-6.8, 2.4, -22.5) },
+  6: { pos: new THREE.Vector3(4.0, 2.4, -24.5), target: new THREE.Vector3(6.8, 2.4, -24.5) },
 };
-
-function smoothstep(min: number, max: number, value: number): number {
-  const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
-  return x * x * (3 - 2 * x);
-}
 
 export function CameraRig() {
   const scroll = useScroll();
-  const { registerScrollEl, setScrollOffset, setCurrentScene, activePhotoId } = useAppState();
+  const {
+    registerScrollEl,
+    setScrollOffset,
+    setCurrentScene,
+    activePhotoId,
+    isLetterOpen,
+  } = useAppState();
 
-  const currentPos = useRef(new THREE.Vector3(0, 2, 8));
-  const currentTarget = useRef(new THREE.Vector3(0, 1.5, 0));
+  const currentPos = useRef(new THREE.Vector3(0, 1.85, 7.2));
+  const currentTarget = useRef(new THREE.Vector3(0, 1.35, 0));
   const desiredPos = useRef(new THREE.Vector3());
   const desiredTarget = useRef(new THREE.Vector3());
   const lastReportedOffset = useRef(-1);
   const lastReportedScene = useRef(-1);
 
-  // Register scroll element with AppState so buttons can trigger smooth scrolling
+  // Register scroll element with AppState
   useEffect(() => {
     if (scroll.el) {
       registerScrollEl(scroll.el);
     }
   }, [scroll.el, registerScrollEl]);
 
+  // Lock background scroll when a modal is open to prevent background scene drift
+  useEffect(() => {
+    if (!scroll.el) return;
+    const isModalOpen = activePhotoId !== null || isLetterOpen;
+    if (isModalOpen) {
+      scroll.el.style.overflow = 'hidden';
+    } else {
+      scroll.el.style.overflow = 'auto';
+    }
+  }, [scroll.el, activePhotoId, isLetterOpen]);
+
+  // Global keyboard listener to ensure ArrowDown, ArrowUp, PageDown, etc.
+  // work immediately on page load even before clicking the canvas.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if an input or modal is active
+      if (activePhotoId !== null || isLetterOpen) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (!scroll.el) return;
+
+      const clientHeight = scroll.el.clientHeight;
+      const step = 140;
+
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'j':
+          scroll.el.scrollBy({ top: step, behavior: 'smooth' });
+          e.preventDefault();
+          break;
+        case 'ArrowUp':
+        case 'k':
+          scroll.el.scrollBy({ top: -step, behavior: 'smooth' });
+          e.preventDefault();
+          break;
+        case 'PageDown':
+        case ' ':
+          scroll.el.scrollBy({ top: clientHeight * 0.8, behavior: 'smooth' });
+          e.preventDefault();
+          break;
+        case 'PageUp':
+          scroll.el.scrollBy({ top: -clientHeight * 0.8, behavior: 'smooth' });
+          e.preventDefault();
+          break;
+        case 'Home':
+          scroll.el.scrollTo({ top: 0, behavior: 'smooth' });
+          e.preventDefault();
+          break;
+        case 'End':
+          scroll.el.scrollTo({ top: scroll.el.scrollHeight, behavior: 'smooth' });
+          e.preventDefault();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [scroll.el, activePhotoId, isLetterOpen]);
+
   useFrame((state, delta) => {
-    const offset = scroll.offset;
+    const offset = Math.max(0, Math.min(1, scroll.offset));
+    const safeDelta = Math.min(delta, 0.1); // clamp delta to prevent lag spikes
 
     if (activePhotoId !== null && photoFocusTargets[activePhotoId]) {
       // Photo selected: Camera glides smoothly in front of the artwork
       desiredPos.current.copy(photoFocusTargets[activePhotoId].pos);
       desiredTarget.current.copy(photoFocusTargets[activePhotoId].target);
     } else {
-      // Normal continuous scroll waypoint interpolation
-      let fromIdx = 0;
-      let toIdx = 0;
-      let t = 0;
-      let detectedScene = 0;
-
-      for (let i = 0; i < waypoints.length - 1; i++) {
-        const fromEnd = waypoints[i].range[1];
-        const toStart = waypoints[i + 1].range[0];
-
-        if (offset <= waypoints[i].range[1]) {
-          fromIdx = i;
-          toIdx = i;
-          t = 0;
-          detectedScene = i;
-          break;
-        } else if (offset >= waypoints[i + 1].range[0]) {
-          if (i === waypoints.length - 2 || offset <= waypoints[i + 1].range[1]) {
-            fromIdx = i + 1;
-            toIdx = i + 1;
-            t = 0;
-            detectedScene = i + 1;
-            break;
-          }
-        } else {
-          fromIdx = i;
-          toIdx = i + 1;
-          t = smoothstep(fromEnd, toStart, offset);
-          detectedScene = t > 0.5 ? i + 1 : i;
-          break;
-        }
-      }
-
-      if (offset >= waypoints[waypoints.length - 1].range[0]) {
-        fromIdx = waypoints.length - 1;
-        toIdx = waypoints.length - 1;
-        t = 0;
-        detectedScene = waypoints.length - 1;
-      }
-
-      desiredPos.current.lerpVectors(
-        waypoints[fromIdx].position,
-        waypoints[toIdx].position,
-        t
-      );
-      desiredTarget.current.lerpVectors(
-        waypoints[fromIdx].target,
-        waypoints[toIdx].target,
-        t
-      );
+      // Continuous camera interpolation along the whole landmark path
+      const detectedScene = evaluateCameraPath(offset, desiredPos.current, desiredTarget.current);
 
       if (detectedScene !== lastReportedScene.current) {
         lastReportedScene.current = detectedScene;
@@ -133,15 +119,16 @@ export function CameraRig() {
       }
     }
 
-    const dampFactor = 1 - Math.pow(0.001, delta);
+    // Smooth cinematic damping
+    const dampFactor = 1 - Math.pow(0.0008, safeDelta);
     currentPos.current.lerp(desiredPos.current, dampFactor);
     currentTarget.current.lerp(desiredTarget.current, dampFactor);
 
     state.camera.position.copy(currentPos.current);
     state.camera.lookAt(currentTarget.current);
 
-    // Sync scroll state with throttle
-    if (Math.abs(offset - lastReportedOffset.current) > 0.003) {
+    // Sync scroll state with throttle to avoid React churn
+    if (Math.abs(offset - lastReportedOffset.current) > 0.002) {
       lastReportedOffset.current = offset;
       setScrollOffset(offset);
     }

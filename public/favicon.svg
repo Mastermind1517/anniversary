@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#42151D"/>
+  <!-- Stylized Rose silhouette in restrained crimson and ivory -->
+  <path d="M16 8 C14 8, 12 10, 12 12 C12 14, 14 15.5, 16 16 C18 15.5, 20 14, 20 12 C20 10, 18 8, 16 8 Z" fill="#8F2635"/>
+  <path d="M12 12 C10 13, 9 15, 10 17 C11 19, 13.5 20, 16 20.5 C14.5 18, 13 16, 12 12 Z" fill="#651E2B"/>
+  <path d="M20 12 C22 13, 23 15, 22 17 C21 19, 18.5 20, 16 20.5 C17.5 18, 19 16, 20 12 Z" fill="#7A2030"/>
+  <circle cx="16" cy="12" r="1.5" fill="#F5F0E7" opacity="0.8"/>
+  <path d="M16 20.5 L16 26" stroke="#253524" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

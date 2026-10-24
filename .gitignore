@@ -3,3 +3,14 @@ dist/
 .astro/
 .DS_Store
 *.log
+.agent/
+.agents/
+.gemini/
+adapters/
+model_capabilities.yaml
+GSD-STYLE.md
+PROJECT_RULES.md
+docs/
+scripts/*.ps1
+scripts/*.sh
+
