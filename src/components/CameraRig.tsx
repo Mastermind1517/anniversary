@@ -35,6 +35,16 @@ const waypoints = [
   },
 ];
 
+/** Focus coordinates when a memory frame is selected */
+const photoFocusTargets: Record<number, { pos: THREE.Vector3; target: THREE.Vector3 }> = {
+  1: { pos: new THREE.Vector3(-3.8, 2.4, -13.5), target: new THREE.Vector3(-6.8, 2.4, -13.5) },
+  2: { pos: new THREE.Vector3(3.8, 2.4, -15.5), target: new THREE.Vector3(6.8, 2.4, -15.5) },
+  3: { pos: new THREE.Vector3(-3.8, 2.4, -18.0), target: new THREE.Vector3(-6.8, 2.4, -18.0) },
+  4: { pos: new THREE.Vector3(3.8, 2.4, -20.0), target: new THREE.Vector3(6.8, 2.4, -20.0) },
+  5: { pos: new THREE.Vector3(-3.8, 2.4, -22.5), target: new THREE.Vector3(-6.8, 2.4, -22.5) },
+  6: { pos: new THREE.Vector3(3.8, 2.4, -24.5), target: new THREE.Vector3(6.8, 2.4, -24.5) },
+};
+
 function smoothstep(min: number, max: number, value: number): number {
   const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
   return x * x * (3 - 2 * x);
@@ -42,7 +52,7 @@ function smoothstep(min: number, max: number, value: number): number {
 
 export function CameraRig() {
   const scroll = useScroll();
-  const { registerScrollEl, setScrollOffset, setCurrentScene } = useAppState();
+  const { registerScrollEl, setScrollOffset, setCurrentScene, activePhotoId } = useAppState();
 
   const currentPos = useRef(new THREE.Vector3(0, 2, 8));
   const currentTarget = useRef(new THREE.Vector3(0, 1.5, 0));
@@ -61,55 +71,67 @@ export function CameraRig() {
   useFrame((state, delta) => {
     const offset = scroll.offset;
 
-    let fromIdx = 0;
-    let toIdx = 0;
-    let t = 0;
-    let detectedScene = 0;
+    if (activePhotoId !== null && photoFocusTargets[activePhotoId]) {
+      // Photo selected: Camera glides smoothly in front of the artwork
+      desiredPos.current.copy(photoFocusTargets[activePhotoId].pos);
+      desiredTarget.current.copy(photoFocusTargets[activePhotoId].target);
+    } else {
+      // Normal continuous scroll waypoint interpolation
+      let fromIdx = 0;
+      let toIdx = 0;
+      let t = 0;
+      let detectedScene = 0;
 
-    for (let i = 0; i < waypoints.length - 1; i++) {
-      const fromEnd = waypoints[i].range[1];
-      const toStart = waypoints[i + 1].range[0];
+      for (let i = 0; i < waypoints.length - 1; i++) {
+        const fromEnd = waypoints[i].range[1];
+        const toStart = waypoints[i + 1].range[0];
 
-      if (offset <= waypoints[i].range[1]) {
-        fromIdx = i;
-        toIdx = i;
-        t = 0;
-        detectedScene = i;
-        break;
-      } else if (offset >= waypoints[i + 1].range[0]) {
-        if (i === waypoints.length - 2 || offset <= waypoints[i + 1].range[1]) {
-          fromIdx = i + 1;
-          toIdx = i + 1;
+        if (offset <= waypoints[i].range[1]) {
+          fromIdx = i;
+          toIdx = i;
           t = 0;
-          detectedScene = i + 1;
+          detectedScene = i;
+          break;
+        } else if (offset >= waypoints[i + 1].range[0]) {
+          if (i === waypoints.length - 2 || offset <= waypoints[i + 1].range[1]) {
+            fromIdx = i + 1;
+            toIdx = i + 1;
+            t = 0;
+            detectedScene = i + 1;
+            break;
+          }
+        } else {
+          fromIdx = i;
+          toIdx = i + 1;
+          t = smoothstep(fromEnd, toStart, offset);
+          detectedScene = t > 0.5 ? i + 1 : i;
           break;
         }
-      } else {
-        fromIdx = i;
-        toIdx = i + 1;
-        t = smoothstep(fromEnd, toStart, offset);
-        detectedScene = t > 0.5 ? i + 1 : i;
-        break;
+      }
+
+      if (offset >= waypoints[waypoints.length - 1].range[0]) {
+        fromIdx = waypoints.length - 1;
+        toIdx = waypoints.length - 1;
+        t = 0;
+        detectedScene = waypoints.length - 1;
+      }
+
+      desiredPos.current.lerpVectors(
+        waypoints[fromIdx].position,
+        waypoints[toIdx].position,
+        t
+      );
+      desiredTarget.current.lerpVectors(
+        waypoints[fromIdx].target,
+        waypoints[toIdx].target,
+        t
+      );
+
+      if (detectedScene !== lastReportedScene.current) {
+        lastReportedScene.current = detectedScene;
+        setCurrentScene(detectedScene);
       }
     }
-
-    if (offset >= waypoints[waypoints.length - 1].range[0]) {
-      fromIdx = waypoints.length - 1;
-      toIdx = waypoints.length - 1;
-      t = 0;
-      detectedScene = waypoints.length - 1;
-    }
-
-    desiredPos.current.lerpVectors(
-      waypoints[fromIdx].position,
-      waypoints[toIdx].position,
-      t
-    );
-    desiredTarget.current.lerpVectors(
-      waypoints[fromIdx].target,
-      waypoints[toIdx].target,
-      t
-    );
 
     const dampFactor = 1 - Math.pow(0.001, delta);
     currentPos.current.lerp(desiredPos.current, dampFactor);
@@ -118,14 +140,10 @@ export function CameraRig() {
     state.camera.position.copy(currentPos.current);
     state.camera.lookAt(currentTarget.current);
 
-    // Sync scroll state with throttle to avoid excessive re-renders
+    // Sync scroll state with throttle
     if (Math.abs(offset - lastReportedOffset.current) > 0.003) {
       lastReportedOffset.current = offset;
       setScrollOffset(offset);
-    }
-    if (detectedScene !== lastReportedScene.current) {
-      lastReportedScene.current = detectedScene;
-      setCurrentScene(detectedScene);
     }
   });
 

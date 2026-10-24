@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { siteConfig, type Memory } from '../../config/content';
@@ -22,7 +22,6 @@ function createPlaceholderTexture(title: string, date: string, id: number): THRE
   canvas.height = 768;
   const ctx = canvas.getContext('2d');
   if (ctx) {
-    // Rich archival paper tone
     const grad = ctx.createLinearGradient(0, 0, 1024, 768);
     const hues = ['#301217', '#250E12', '#3D151D', '#1F0B0E', '#2B1015', '#38161E'];
     const baseHue = hues[(id - 1) % hues.length];
@@ -71,11 +70,33 @@ function createPlaceholderTexture(title: string, date: string, id: number): THRE
 export function PhotoFrame({ memory, position, rotation = [0, 0, 0], onSelect }: PhotoFrameProps) {
   const meshRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
+  const [activeTexture, setActiveTexture] = useState<THREE.Texture | null>(null);
 
-  // Fallback to stylized editorial canvas texture if image is not found or is placeholder
-  const texture = useMemo(() => {
+  // Generate artistic placeholder texture as default
+  const placeholderTexture = useMemo(() => {
     return createPlaceholderTexture(memory.title, memory.date, memory.id);
   }, [memory]);
+
+  // Attempt to load the real photograph from memory.photo if available
+  useEffect(() => {
+    if (memory.photo) {
+      const loader = new THREE.TextureLoader();
+      loader.load(
+        memory.photo,
+        (loadedTex) => {
+          loadedTex.colorSpace = THREE.SRGBColorSpace;
+          setActiveTexture(loadedTex);
+        },
+        undefined,
+        () => {
+          // Fall back gracefully to archival placeholder
+          setActiveTexture(placeholderTexture);
+        }
+      );
+    } else {
+      setActiveTexture(placeholderTexture);
+    }
+  }, [memory.photo, placeholderTexture]);
 
   useFrame((_, delta) => {
     if (meshRef.current) {
@@ -122,11 +143,11 @@ export function PhotoFrame({ memory, position, rotation = [0, 0, 0], onSelect }:
         />
       </mesh>
 
-      {/* Photograph artwork */}
+      {/* Photograph artwork — real texture or high-art placeholder */}
       <mesh position={[0, 0, 0.045]}>
         <planeGeometry args={[1.85, 1.25]} />
         <meshStandardMaterial
-          map={texture}
+          map={activeTexture || placeholderTexture}
           roughness={0.45}
           metalness={0.02}
         />
@@ -165,7 +186,6 @@ export function MemoryGallery() {
   const { setActivePhotoId } = useAppState();
   const memories = siteConfig.memories;
 
-  // Position frames along the left and right walls of Scene 2 (z = -12 to -25)
   const framePositions: Array<{ pos: [number, number, number]; rot: [number, number, number] }> = [
     { pos: [-6.8, 2.4, -13.5], rot: [0, Math.PI / 2, 0] },
     { pos: [6.8, 2.4, -15.5], rot: [0, -Math.PI / 2, 0] },

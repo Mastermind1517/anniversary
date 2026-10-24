@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppState } from '../AppState';
 import { siteConfig } from '../../config/content';
 
 /**
  * Intimate editorial modal displayed when a gallery photograph is clicked.
- * Clean, restrained, fine-art exhibition layout.
+ * Clean, restrained, fine-art exhibition layout featuring the photograph,
+ * date, title, and personal caption.
  */
 export function MemoryDetailModal() {
   const { activePhotoId, setActivePhotoId } = useAppState();
+  const [imgError, setImgError] = useState(false);
 
   if (activePhotoId === null) return null;
 
@@ -28,9 +30,10 @@ export function MemoryDetailModal() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem',
+        padding: 'clamp(1rem, 3vw, 2.5rem)',
         animation: 'fadeIn 0.6s ease-out forwards',
         pointerEvents: 'auto',
+        overflowY: 'auto',
       }}
       onClick={() => setActivePhotoId(null)}
     >
@@ -43,6 +46,7 @@ export function MemoryDetailModal() {
           padding: 'clamp(2rem, 5vw, 3.5rem)',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
           position: 'relative',
+          margin: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -100,6 +104,67 @@ export function MemoryDetailModal() {
         >
           {memory.title}
         </h2>
+
+        {/* Photograph Display with ivory passe-partout */}
+        <div
+          style={{
+            width: '100%',
+            maxHeight: '360px',
+            backgroundColor: '#F5F0E7',
+            marginBottom: '1.8rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            border: '1px solid rgba(101, 30, 43, 0.1)',
+          }}
+        >
+          {!imgError ? (
+            <img
+              src={memory.photo}
+              alt={memory.title}
+              onError={() => setImgError(true)}
+              style={{
+                width: '100%',
+                height: '100%',
+                maxHeight: '360px',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                padding: '3rem 2rem',
+                textAlign: 'center',
+                color: '#651E2B',
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: '"Cormorant Garamond", serif',
+                  fontSize: '1.3rem',
+                  fontStyle: 'italic',
+                  margin: '0 0 0.5rem 0',
+                }}
+              >
+                {memory.title}
+              </p>
+              <p
+                style={{
+                  fontFamily: '"Inter", sans-serif',
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.15em',
+                  color: '#B8B0A8',
+                  textTransform: 'uppercase',
+                  margin: 0,
+                }}
+              >
+                Place photo in {memory.photo}
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Thin divider rule */}
         <div
