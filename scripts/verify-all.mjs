@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer-core';
 
 const EDGE_PATH = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-const TARGET_URL = 'http://localhost:4321/';
+const TARGET_URL = process.argv[2] || 'http://localhost:4321/';
 
 async function runVerification() {
   console.log(`Starting comprehensive verification against ${TARGET_URL}...`);
