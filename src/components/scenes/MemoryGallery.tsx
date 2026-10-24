@@ -170,18 +170,19 @@ export function PhotoFrame({ memory, position, rotation = [0, 0, 0], onSelect }:
         />
       </mesh>
 
-      {/* High-clarity protective glass with subtle non-milky specular reflection */}
+      {/* High-clarity museum protective glazing: crisp specular response with crystal transparency */}
       <mesh position={[0, 0, 0.045]}>
         <planeGeometry args={[1.85, 1.25]} />
         <meshPhysicalMaterial
           color="#FFFFFF"
-          roughness={0.04}
-          metalness={0.0}
-          transmission={0.96}
-          thickness={0.04}
-          ior={1.48}
+          roughness={0.02}
+          metalness={0.05}
+          reflectivity={0.9}
+          clearcoat={1.0}
+          clearcoatRoughness={0.02}
           transparent
-          opacity={0.35}
+          opacity={0.06}
+          depthWrite={false}
         />
       </mesh>
 

@@ -30,8 +30,8 @@ export function CameraRig() {
 
   const currentPos = useRef(new THREE.Vector3(0, 1.85, 7.2));
   const currentTarget = useRef(new THREE.Vector3(0, 1.35, 0));
-  const desiredPos = useRef(new THREE.Vector3());
-  const desiredTarget = useRef(new THREE.Vector3());
+  const desiredPos = useRef(new THREE.Vector3(0, 1.85, 7.2));
+  const desiredTarget = useRef(new THREE.Vector3(0, 1.35, 0));
   const lastReportedOffset = useRef(-1);
   const lastReportedScene = useRef(-1);
 
@@ -103,12 +103,17 @@ export function CameraRig() {
 
   useFrame((state, delta) => {
     const offset = Math.max(0, Math.min(1, scroll.offset));
-    const safeDelta = Math.min(delta, 0.1); // clamp delta to prevent lag spikes
+    const safeDelta = Math.min(delta, 0.1);
 
     if (activePhotoId !== null && photoFocusTargets[activePhotoId]) {
       // Photo selected: Camera glides smoothly in front of the artwork
       desiredPos.current.copy(photoFocusTargets[activePhotoId].pos);
       desiredTarget.current.copy(photoFocusTargets[activePhotoId].target);
+
+      // Smooth glide to frame
+      const focusDamp = 1 - Math.pow(0.001, safeDelta);
+      currentPos.current.lerp(desiredPos.current, focusDamp);
+      currentTarget.current.lerp(desiredTarget.current, focusDamp);
     } else {
       // Continuous camera interpolation along the whole landmark path
       const detectedScene = evaluateCameraPath(offset, desiredPos.current, desiredTarget.current);
@@ -117,12 +122,20 @@ export function CameraRig() {
         lastReportedScene.current = detectedScene;
         setCurrentScene(detectedScene);
       }
-    }
 
-    // Smooth cinematic damping
-    const dampFactor = 1 - Math.pow(0.0008, safeDelta);
-    currentPos.current.lerp(desiredPos.current, dampFactor);
-    currentTarget.current.lerp(desiredTarget.current, dampFactor);
+      // If returning from photo focus, smoothly blend back to track
+      const dist = currentPos.current.distanceTo(desiredPos.current);
+      if (dist > 0.05) {
+        const returnDamp = 1 - Math.pow(0.0005, safeDelta);
+        currentPos.current.lerp(desiredPos.current, returnDamp);
+        currentTarget.current.lerp(desiredTarget.current, returnDamp);
+      } else {
+        // Direct tracking: eliminates double smoothing entirely.
+        // ScrollControls damping provides pristine cinematic smoothness with zero lag.
+        currentPos.current.copy(desiredPos.current);
+        currentTarget.current.copy(desiredTarget.current);
+      }
+    }
 
     state.camera.position.copy(currentPos.current);
     state.camera.lookAt(currentTarget.current);

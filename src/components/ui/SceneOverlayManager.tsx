@@ -4,15 +4,15 @@ import { OpeningOverlay } from '../scenes/OpeningOverlay';
 import { MemoryDetailModal } from './MemoryDetailModal';
 import { LoveLetterModal } from './LoveLetterModal';
 import { FinaleOverlay } from '../scenes/FinaleOverlay';
-import { SCENE_NAV_ITEMS } from '../../config/scenes';
+import { SCENE_NAV_ITEMS, ENTER_TARGET_OFFSET } from '../../config/scenes';
 
 export function SceneOverlayManager() {
   const { scrollOffset, currentScene, scrollTo, setHasEntered } = useAppState();
 
   const handleEnter = () => {
     setHasEntered(true);
-    // Smoothly scroll to the Memories gallery landmark
-    scrollTo(0.32, true);
+    // Smoothly scroll to the Memories gallery primary landmark
+    scrollTo(ENTER_TARGET_OFFSET, true);
   };
 
   return (

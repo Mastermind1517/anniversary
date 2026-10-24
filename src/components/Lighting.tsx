@@ -4,8 +4,9 @@ import { threeColors } from '../config/colors';
 
 /**
  * Cinematic lighting setup for the architectural gallery:
- * Warm ivory directional light creating deliberate shadows, deep burgundy
- * ambient fill, and focused spotlights for each sculptural centerpiece.
+ * Warm ivory directional light creating deliberate architectural shadows,
+ * deep burgundy ambient fill preventing crushed darks, and focused
+ * spotlights highlighting each sculptural centerpiece.
  */
 export function Lighting() {
   const roseTargetRef = useRef<THREE.Object3D>(new THREE.Object3D());
@@ -22,75 +23,82 @@ export function Lighting() {
       {/* Main directional light — warm ivory, dramatic architectural angle */}
       <directionalLight
         color={threeColors.ivory}
-        intensity={1.15}
-        position={[6, 14, 6]}
+        intensity={1.1}
+        position={[5, 14, 5]}
         castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-camera-near={0.5}
-        shadow-camera-far={85}
-        shadow-camera-left={-32}
-        shadow-camera-right={32}
-        shadow-camera-top={22}
-        shadow-camera-bottom={-22}
-        shadow-bias={-0.0004}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-near={1.0}
+        shadow-camera-far={70}
+        shadow-camera-left={-12}
+        shadow-camera-right={12}
+        shadow-camera-top={16}
+        shadow-camera-bottom={-16}
+        shadow-bias={-0.00015}
+        shadow-normalBias={0.02}
       />
 
-      {/* Ambient fill — subtle burgundy, prevents total blackness in deep recesses */}
-      <ambientLight color={threeColors.burgundy} intensity={0.16} />
+      {/* Ambient fill — subtle burgundy, ensures shadow recesses retain rich warmth */}
+      <ambientLight color={threeColors.burgundy} intensity={0.22} />
 
       {/* Scene 1: Narrow warm ivory beam illuminating the opening rose */}
       <spotLight
         color={threeColors.ivory}
-        intensity={3.2}
-        position={[1.2, 8.5, 3.2]}
-        angle={0.3}
-        penumbra={0.8}
-        distance={24}
+        intensity={2.8}
+        position={[1.2, 8.0, 3.0]}
+        angle={0.32}
+        penumbra={0.75}
+        distance={22}
         castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-bias={-0.0001}
         target={roseTargetRef.current}
       />
 
-      {/* Scene 2: Gallery architectural illumination for framed memories */}
+      {/* Scene 2: Gallery corridor architectural illumination for framed memories */}
       <pointLight
         color={threeColors.porcelain}
         intensity={0.65}
-        position={[0, 4.8, -15]}
-        distance={22}
+        position={[0, 4.6, -15]}
+        distance={20}
       />
       <pointLight
         color={threeColors.ivory}
         intensity={0.55}
-        position={[0, 4.8, -22]}
-        distance={22}
+        position={[0, 4.6, -22]}
+        distance={20}
       />
 
       {/* Scene 3: Focused spotlight on keepsake love letter pedestal */}
       <spotLight
         color={threeColors.ivory}
-        intensity={2.4}
-        position={[0, 7.5, -32.5]}
-        angle={0.32}
+        intensity={2.2}
+        position={[0, 7.2, -32.5]}
+        angle={0.30}
         penumbra={0.75}
-        distance={20}
+        distance={18}
         castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-bias={-0.0001}
         target={letterTargetRef.current}
       />
 
       {/* Scene 4: Finale — luminous light refracting through the transparent glass vessel */}
       <pointLight
         color={threeColors.porcelain}
-        intensity={0.85}
-        position={[0, 5, -53]}
-        distance={26}
+        intensity={0.80}
+        position={[0, 4.8, -53]}
+        distance={24}
       />
       <spotLight
         color={threeColors.ivory}
         intensity={2.4}
-        position={[-1.8, 6.5, -51.5]}
-        angle={0.36}
+        position={[-1.6, 6.2, -51.5]}
+        angle={0.34}
         penumbra={0.8}
-        distance={22}
+        distance={20}
         target={finaleTargetRef.current}
       />
     </>
